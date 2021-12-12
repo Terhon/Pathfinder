@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Pathfinder.Controllers
@@ -9,10 +10,12 @@ namespace Pathfinder.Controllers
         private const string destination = "USA";
 
         [HttpGet("{id}")]
-        public async Task<IEnumerable<string>> GetPathAsync(string id)
+        public ActionResult GetPath(string id)
         {
             id = id.Replace("'", "''");
-            return destination.Equals(id.ToUpper()) ? new List<string>(){ destination } : await DbConnection.GetPath(destination, id);
+            var path = destination.Equals(id.ToUpper()) ? new List<string>(){ destination } : DbConnection.GetPath(destination, id).Result;
+            
+            return Ok(path);
         }
     }
 }

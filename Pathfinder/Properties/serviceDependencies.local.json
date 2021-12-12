@@ -5,8 +5,9 @@
     },
     "mssql1": {
       "secretStore": "LocalSecretsFile",
-      "type": "mssql.onprem",
-      "connectionId": "ConnectionStrings:PathDb"
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/pathfinderdbserver/databases/Pathfinder_db",
+      "type": "mssql.azure",
+      "connectionId": "azuredb"
     }
   }
 }

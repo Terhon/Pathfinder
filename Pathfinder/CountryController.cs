@@ -11,6 +11,7 @@ namespace Pathfinder.Controllers
         [HttpGet("{id}")]
         public async Task<IEnumerable<string>> GetPathAsync(string id)
         {
+            id = id.Replace("'", "''");
             return destination.Equals(id.ToUpper()) ? new List<string>(){ destination } : await DbConnection.GetPath(destination, id);
         }
     }

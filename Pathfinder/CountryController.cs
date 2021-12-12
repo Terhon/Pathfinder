@@ -1,6 +1,5 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
-using Pathfinder.Domain.Persistence.Contexts;
 
 namespace Pathfinder.Controllers
 {
@@ -12,8 +11,7 @@ namespace Pathfinder.Controllers
         [HttpGet("{id}")]
         public async Task<IEnumerable<string>> GetPathAsync(string id)
         {
-            var path = await DbConnection.GetPath(destination, id);
-            return path;
+            return destination.Equals(id.ToUpper()) ? new List<string>(){ destination } : await DbConnection.GetPath(destination, id);
         }
     }
 }

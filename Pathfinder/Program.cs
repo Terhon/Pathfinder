@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore;
-using Pathfinder.Domain.Persistence.Contexts;
 
 namespace Pathfinder
 {

@@ -1,12 +1,12 @@
 ﻿using System.Data.SqlClient;
+using System.Configuration;
 
-namespace Pathfinder.Domain.Persistence.Contexts
+namespace Pathfinder
 {
     public class DbConnection
     {
-        private const string connectionString = "Data Source=desktop-pc;" +
-                                                "Initial Catalog=PathfinderDb;" +
-                                                "Integrated Security=SSPI;";
+        private const string connectionString = "Data Source=pathfinderdbserver.database.windows.net,1433;Initial Catalog=Pathfinder_db;User Id=pathadmin@pathfinderdbserver;Password=Abcd1234";
+
         private const string checkTablesQuery = "SELECT CASE WHEN (OBJECT_ID('dbo.Countries', 'U') IS NOT NULL AND OBJECT_ID('dbo.NeighbourOf', 'U') IS NOT NULL)" +
                                                 " THEN 1 ELSE 0 END";
         private const string createTableCountriesQuery = "CREATE TABLE Countries (ID INTEGER PRIMARY KEY, CountryCode VARCHAR(3)) as NODE; ";
@@ -14,19 +14,11 @@ namespace Pathfinder.Domain.Persistence.Contexts
                                                         "(1, 'CAN'),(2, 'USA'),(3, 'MEX'),(4, 'BLZ'),(5, 'GTM')," +
                                                         "(6, 'SLV'),(7, 'HND'),(8, 'NIC'),(9, 'CRI'),(10, 'PAN');";
         private const string createNeighboursTableQuery = "CREATE TABLE NeighbourOf AS EDGE;";
-        private const string insertNeighboursDataQuery = "INSERT INTO NeighbourOf VALUES" +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'CAN'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'USA'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'USA'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'MEX'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'MEX'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'BLZ'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'MEX'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'GTM'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'BLZ'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'GTM'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'GTM'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'SLV'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'GTM'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'HND'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'SLV'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'HND'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'HND'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'NIC'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'NIC'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'CRI'))," +
-                "((SELECT $NODE_ID FROM Countries WHERE CountryCode = 'CRI'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = 'PAN'));";
 
+        private static readonly Tuple<string, string>[] edges = { Tuple.Create( "CAN", "USA"), Tuple.Create("USA", "MEX" ),Tuple.Create("MEX", "BLZ" ),
+                                                                 Tuple.Create("MEX", "GTM" ),Tuple.Create("BLZ", "GTM" ),Tuple.Create("GTM", "SLV" ),
+                                                                 Tuple.Create("GTM", "HND" ),Tuple.Create("SLV", "HND" ),Tuple.Create("HND", "NIC" ),
+                                                                 Tuple.Create("NIC", "CRI" ),Tuple.Create("CRI", "PAN" )};
 
         private static SqlConnection GetSqlConnection()
         {
@@ -85,12 +77,30 @@ namespace Pathfinder.Domain.Persistence.Contexts
 
             using var adap = new SqlDataAdapter();
 
-            string[] queries = { createTableCountriesQuery, insertCountriesDataQuery, createNeighboursTableQuery, insertNeighboursDataQuery };
+            string[] queries = { createTableCountriesQuery, insertCountriesDataQuery, createNeighboursTableQuery, GetInsertNeighboursQuery() };
             foreach (var query in queries)
             {
                 adap.InsertCommand = new SqlCommand(query, conn);
                 adap.InsertCommand.ExecuteNonQuery();
             }
         }
+
+        private static string GetInsertNeighboursQuery()
+        {
+            var edgeList = new List<string>();
+            foreach (var edge in edges)
+            {
+                edgeList.Add(GetNeighboursQuery(edge.Item1, edge.Item2) + "," + GetNeighboursQuery(edge.Item2, edge.Item1));
+            }
+            var query = "INSERT INTO NeighbourOf VALUES" + String.Join(",", edgeList.ToArray()) + ";";
+
+            return query;
+        }
+
+        private static string GetNeighboursQuery(string countryA, string countryB)
+        {
+            return "((SELECT $NODE_ID FROM Countries WHERE CountryCode = '" + countryA + "'), (SELECT $NODE_ID FROM Countries WHERE CountryCode = '" + countryB + "'))";
+        }
+
     }
 }

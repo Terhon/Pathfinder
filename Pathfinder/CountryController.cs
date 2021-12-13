@@ -12,9 +12,7 @@ namespace Pathfinder.Controllers
         public ActionResult GetPath(string id)
         {
             id = id.Replace("'", "''");
-            var path = destination.Equals(id.ToUpper()) ? new List<string>() { destination } : DbConnection.GetPath(destination, id).Result;
-
-            return Ok(path);
+            return Ok(DbConnection.GetPath(destination, id).Result);
         }
 
         [HttpGet()]

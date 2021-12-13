@@ -30,6 +30,9 @@ namespace Pathfinder
 
         public static async Task<List<string>> GetPath(string DestinationCountryCode, string StartCountryCode)
         {
+            if (DestinationCountryCode.Equals(StartCountryCode.ToUpper()))
+                return new List<string>() { DestinationCountryCode };
+
             using var conn = GetSqlConnection();
             await conn.OpenAsync();
 
